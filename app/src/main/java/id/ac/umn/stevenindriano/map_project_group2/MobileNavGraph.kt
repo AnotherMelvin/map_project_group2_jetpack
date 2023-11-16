@@ -8,8 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import id.ac.umn.stevenindriano.map_project_group2.ui.createedit.CreateEditScreen
 import id.ac.umn.stevenindriano.map_project_group2.ui.home.HomeScreen
 import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavDrawerMenu
+import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavScreenMenu
 import id.ac.umn.stevenindriano.map_project_group2.ui.setting.SettingScreen
 
 @Composable
@@ -21,13 +23,21 @@ fun MobileNavGraph(
     NavHost(
         navController = navController,
         startDestination = NavDrawerMenu.Home.route,
-        modifier.padding(innerPaddingValues).animateContentSize()
+        modifier
+            .padding(innerPaddingValues)
+            .animateContentSize()
     ) {
         composable(NavDrawerMenu.Home.route) {
-            HomeScreen()
+            HomeScreen(navController)
         }
         composable(NavDrawerMenu.Setting.route) {
             SettingScreen()
+        }
+        composable(NavScreenMenu.Create.route) {
+            CreateEditScreen("Create")
+        }
+        composable(NavScreenMenu.Edit.route) {
+            CreateEditScreen("Edit")
         }
     }
 }
