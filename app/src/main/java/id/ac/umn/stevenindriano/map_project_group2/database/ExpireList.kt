@@ -9,13 +9,13 @@ import java.util.Date
 data class ExpireList(
     @ColumnInfo(name = "item_id")
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
+    val id: Int = 0,
     @ColumnInfo(name = "item_name")
     val name: String,
     @ColumnInfo(name = "item_location")
     val location: String,
     @ColumnInfo(name = "item_qty")
-    val qty: Int,
+    val qty: String,
     @ColumnInfo(name = "item_exp")
     val exp: Date,
     @ColumnInfo(name = "item_notes")

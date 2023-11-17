@@ -19,13 +19,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import id.ac.umn.stevenindriano.map_project_group2.database.ExpireList
-import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavScreenMenu
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,7 +29,7 @@ import java.util.Locale
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(onNavigate: (Int) -> Unit) {
     val homeViewModel = viewModel(modelClass = HomeViewModel::class.java)
     val homeState = homeViewModel.state
 
@@ -42,7 +38,7 @@ fun HomeScreen(navController: NavController) {
             FloatingActionButton(modifier = Modifier
                 .size(64.dp),
                 onClick = {
-                    navController.navigate(NavScreenMenu.Create.route)
+                    onNavigate.invoke(-1)
                 },) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Button")
             }
@@ -51,9 +47,9 @@ fun HomeScreen(navController: NavController) {
         LazyColumn {
             items(homeState.items) {
                 ExpireItems(
-                    item = it,
+                    item = it
                 ) {
-                    navController.navigate(NavScreenMenu.Edit.route)
+                    onNavigate.invoke(it.id)
                 }
             }
         }
@@ -63,25 +59,25 @@ fun HomeScreen(navController: NavController) {
 //    AddButton(navController)
 }
 
-@Composable
-fun AddButton(navController: NavController) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(25.dp),
-    ){
-        Row(modifier = Modifier
-            .align(Alignment.BottomEnd)){
-            FloatingActionButton(modifier = Modifier
-                .size(64.dp),
-                onClick = {
-                    navController.navigate(NavScreenMenu.Create.route)
-                },) {
-                Icon(Icons.Filled.Add, contentDescription = "Add Button")
-            }
-        }
-    }
-}
+//@Composable
+//fun AddButton(navController: NavController) {
+//    Box(
+//        modifier = Modifier
+//            .fillMaxSize()
+//            .padding(25.dp),
+//    ){
+//        Row(modifier = Modifier
+//            .align(Alignment.BottomEnd)){
+//            FloatingActionButton(modifier = Modifier
+//                .size(64.dp),
+//                onClick = {
+//                    navController.navigate(NavScreenMenu.Create.route)
+//                },) {
+//                Icon(Icons.Filled.Add, contentDescription = "Add Button")
+//            }
+//        }
+//    }
+//}
 
 @Composable
 fun CenteredText(text: String) {
@@ -150,9 +146,9 @@ fun ExpireItems(
 fun formatDate(date: Date): String =
     SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
 
-@Preview
-@Composable
-fun PreviewHome() {
-    val navController = rememberNavController()
-    HomeScreen(navController)
-}
+//@Preview
+//@Composable
+//fun PreviewHome() {
+//    val navController = rememberNavController()
+//    HomeScreen(navController)
+//}
