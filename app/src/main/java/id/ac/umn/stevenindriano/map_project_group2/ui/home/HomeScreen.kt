@@ -1,8 +1,9 @@
 package id.ac.umn.stevenindriano.map_project_group2.ui.home
 
 import android.annotation.SuppressLint
+import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,11 +17,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
+import id.ac.umn.stevenindriano.map_project_group2.R
 import id.ac.umn.stevenindriano.map_project_group2.database.ExpireList
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -29,23 +38,34 @@ import java.util.Locale
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigate: (Int) -> Unit) {
-    val homeViewModel = viewModel(modelClass = HomeViewModel::class.java)
-    val homeState = homeViewModel.state
+fun HomeScreen(onNavigate: (Int) -> Unit, sortList: String) {
+    val homeViewModel: HomeViewModel = viewModel()
+    val homeState by homeViewModel.state.collectAsState(emptyList())
+    var sortedList = homeState
 
-    Scaffold (
+    LaunchedEffect(sortList, Unit) {
+        sortedList = when (sortList) {
+            "Oldest" -> homeState.sortedBy { it.exp.time }
+            "Newest" -> homeState.sortedByDescending { it.exp.time }
+            else -> homeState
+        }
+    }
+
+    Scaffold(
         floatingActionButton = {
-            FloatingActionButton(modifier = Modifier
-                .size(64.dp),
+            FloatingActionButton(
+                modifier = Modifier
+                    .size(64.dp),
                 onClick = {
                     onNavigate.invoke(-1)
-                },) {
+                },
+            ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Button")
             }
         }
     ) {
         LazyColumn {
-            items(homeState.items) {
+            items(sortedList) {
                 ExpireItems(
                     item = it
                 ) {
@@ -107,9 +127,18 @@ fun ExpireItems(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (item.imagePath != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(model = item.imagePath),
+                    contentDescription = "Item Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(150.dp)
+                )
+            }
             Column(
                 modifier = Modifier.padding(8.dp)
             ) {

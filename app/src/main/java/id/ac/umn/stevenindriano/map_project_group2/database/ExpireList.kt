@@ -1,5 +1,6 @@
 package id.ac.umn.stevenindriano.map_project_group2.database
 
+import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -19,5 +20,7 @@ data class ExpireList(
     @ColumnInfo(name = "item_exp")
     val exp: Date,
     @ColumnInfo(name = "item_notes")
-    val notes: String
+    val notes: String,
+    @ColumnInfo(name = "image")
+    val imagePath: Uri? = null,
 )

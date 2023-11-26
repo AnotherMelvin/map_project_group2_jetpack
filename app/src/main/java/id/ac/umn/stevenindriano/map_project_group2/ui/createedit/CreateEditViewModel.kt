@@ -1,5 +1,6 @@
 package id.ac.umn.stevenindriano.map_project_group2.ui.createedit
 
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,7 +32,8 @@ constructor(
                         location = it.location,
                         qty = it.qty,
                         date = it.exp,
-                        notes = it.notes
+                        notes = it.notes,
+                        image = it.imagePath
                     )
                 }
             }
@@ -71,6 +73,10 @@ constructor(
         state = state.copy(notes = newValue)
     }
 
+    fun onImageChange(newValue: Uri?) {
+        state = state.copy(image = newValue)
+    }
+
     fun addListItem() {
         viewModelScope.launch {
             repo.insertItem(
@@ -79,7 +85,8 @@ constructor(
                     location = state.location,
                     qty = state.qty,
                     exp = state.date,
-                    notes = state.notes
+                    notes = state.notes,
+                    imagePath = state.image,
                 )
             )
         }
@@ -94,7 +101,8 @@ constructor(
                     location = state.location,
                     qty = state.qty,
                     exp = state.date,
-                    notes = state.notes
+                    notes = state.notes,
+                    imagePath = state.image,
                 )
             )
         }
@@ -113,6 +121,7 @@ data class CreateEditState(
     val location: String = "",
     val qty: String = "",
     val notes: String = "",
+    val image: Uri? = null,
     val date: Date = Date(),
     val isUpdatingItem: Boolean = false
 )
