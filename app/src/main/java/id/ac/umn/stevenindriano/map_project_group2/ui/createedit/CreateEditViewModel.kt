@@ -27,14 +27,16 @@ constructor(
         if (itemId != -1) {
             viewModelScope.launch {
                 repo.getItem(itemId).collectLatest {
-                    state = state.copy(
-                        name = it.name,
-                        location = it.location,
-                        qty = it.qty,
-                        date = it.exp,
-                        notes = it.notes,
-                        image = it.imagePath
-                    )
+                    if (it != null) {
+                        state = state.copy(
+                            name = it.name,
+                            location = it.location,
+                            qty = it.qty,
+                            date = it.exp,
+                            notes = it.notes,
+                            image = it.imagePath
+                        )
+                    }
                 }
             }
         }
@@ -49,9 +51,9 @@ constructor(
     }
 
     val isFieldNotEmpty: Boolean
-        get() = state.name.isNotEmpty() &&
-                state.qty.isNotEmpty() &&
-                state.date.toString().isNotEmpty()
+        get() = state.name?.isNotEmpty() == true &&
+                state.qty?.isNotEmpty() == true &&
+                state.date?.toString()?.isNotEmpty() == true
 
     fun onNameChange(newValue: String) {
         state = state.copy(name = newValue)
@@ -94,7 +96,7 @@ constructor(
 
     fun updateListItem(id: Int) {
         viewModelScope.launch {
-            repo.insertItem(
+            repo.updateItem(
                 ExpireList(
                     id = id,
                     name = state.name,
@@ -107,6 +109,13 @@ constructor(
             )
         }
     }
+
+    fun deleteItem(id: Int) {
+        viewModelScope.launch {
+            repo.deleteItem(id)
+        }
+    }
+
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -115,6 +124,7 @@ class CreateEditViewModelFactory(private val id: Int): ViewModelProvider.Factory
         return CreateEditViewModel(itemId = id) as T
     }
 }
+
 
 data class CreateEditState(
     val name: String = "",

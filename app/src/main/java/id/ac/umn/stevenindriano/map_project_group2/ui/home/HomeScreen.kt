@@ -1,7 +1,6 @@
 package id.ac.umn.stevenindriano.map_project_group2.ui.home
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,10 +25,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
-import id.ac.umn.stevenindriano.map_project_group2.R
 import id.ac.umn.stevenindriano.map_project_group2.database.ExpireList
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -75,8 +71,10 @@ fun HomeScreen(onNavigate: (Int) -> Unit, sortList: String) {
         }
     }
 
-//    CenteredText(text = "No items yet")
-//    AddButton(navController)
+
+    if (sortedList.isEmpty()) {
+        CenteredText(text = "No items yet")
+    }
 }
 
 //@Composable

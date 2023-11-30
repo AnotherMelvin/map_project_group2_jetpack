@@ -15,7 +15,7 @@ class Repository(private val expireListDao: ExpireListDao) {
         expireListDao.update(item)
     }
 
-    suspend fun deleteItem(item: ExpireList) {
-        expireListDao.delete(item)
+    suspend fun deleteItem(id: Int) {
+        expireListDao.delete(id)
     }
 }

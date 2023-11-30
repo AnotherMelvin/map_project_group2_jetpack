@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
@@ -66,7 +65,6 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 import id.ac.umn.stevenindriano.map_project_group2.ui.home.HomeViewModel
 import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavDrawerMenu
 import id.ac.umn.stevenindriano.map_project_group2.ui.theme.Map_project_group2Theme
@@ -241,14 +239,10 @@ class MainActivity : ComponentActivity() {
                                     actions = {
                                         Box(
                                             modifier = Modifier
-                                                .fillMaxWidth()
                                                 .wrapContentSize(Alignment.TopEnd)
                                         ) {
                                             IconButton(onClick = { menuExpanded = !menuExpanded }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MoreVert,
-                                                    contentDescription = "More"
-                                                )
+                                                Image(painter = painterResource(id = R.drawable.ic_filter), contentDescription = "")
                                             }
                                             DropdownMenu(
                                                 expanded = menuExpanded,

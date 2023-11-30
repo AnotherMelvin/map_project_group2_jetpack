@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -37,11 +38,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +60,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-import java.util.Locale
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,17 +70,48 @@ fun CreateEditScreen(
     navigateUp: () -> Unit
 ) {
     val viewModel = viewModel<CreateEditViewModel>(factory = CreateEditViewModelFactory(id))
-
+    var openAlertDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
+    if (openAlertDialog) {
+        AlertDialog(onDismissRequest = {
+            openAlertDialog = false
+        }, confirmButton = {
+            TextButton(onClick = {
+                viewModel.deleteItem(id)
+                navigateUp.invoke()
+                openAlertDialog = false
+            }) {
+                Text(text = "Ya")
+            }
+        },
+            title = {
+                Text(text = "Konfirmasi Hapus")
+            },
+            text = {
+                Text(text = "Apakah anda ingin menghapus item ini?")
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    openAlertDialog = false
+                }) {
+                    Text(text = "Tidak")
+                }
+            }
+        )
+    }
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier
-                    .size(64.dp),
-                onClick = {
-
-                },
-            ) {
-                Icon(Icons.Filled.Delete, contentDescription = "Remove Button")
+            if (viewModel.state.isUpdatingItem) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .size(64.dp),
+                    onClick = {
+                        openAlertDialog = true
+                    },
+                ) {
+                    Icon(Icons.Filled.Delete, contentDescription = "Remove Button")
+                }
             }
         }
     ) {
@@ -274,7 +306,11 @@ fun getCamImageUri(context: Context): Uri? {
     var uri: Uri? = null
     val file = createImageFile(context)
     try {
-        uri = FileProvider.getUriForFile(context, "id.ac.umn.stevenindriano.map_project_group2.fileprovider", file)
+        uri = FileProvider.getUriForFile(
+            context,
+            "id.ac.umn.stevenindriano.map_project_group2.fileprovider",
+            file
+        )
     } catch (e: Exception) {
         Log.e("Camera", "Error: ${e.message}")
     }
@@ -282,7 +318,7 @@ fun getCamImageUri(context: Context): Uri? {
 }
 
 @SuppressLint("SimpleDateFormat")
-private fun createImageFile(context: Context) : File {
+private fun createImageFile(context: Context): File {
     val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
     val imageDirectory = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
     return File.createTempFile(
