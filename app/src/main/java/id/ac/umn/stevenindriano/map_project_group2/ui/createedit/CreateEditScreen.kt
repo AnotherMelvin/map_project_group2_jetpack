@@ -70,50 +70,50 @@ fun CreateEditScreen(
     navigateUp: () -> Unit
 ) {
     val viewModel = viewModel<CreateEditViewModel>(factory = CreateEditViewModelFactory(id))
-    var openAlertDialog by rememberSaveable {
-        mutableStateOf(false)
-    }
-    if (openAlertDialog) {
-        AlertDialog(onDismissRequest = {
-            openAlertDialog = false
-        }, confirmButton = {
-            TextButton(onClick = {
-                viewModel.deleteItem(id)
-                navigateUp.invoke()
-                openAlertDialog = false
-            }) {
-                Text(text = "Ya")
-            }
-        },
-            title = {
-                Text(text = "Konfirmasi Hapus")
-            },
-            text = {
-                Text(text = "Apakah anda ingin menghapus item ini?")
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    openAlertDialog = false
-                }) {
-                    Text(text = "Tidak")
-                }
-            }
-        )
-    }
+//    var openAlertDialog by rememberSaveable {
+//        mutableStateOf(false)
+//    }
+//    if (openAlertDialog) {
+//        AlertDialog(onDismissRequest = {
+//            openAlertDialog = false
+//        }, confirmButton = {
+//            TextButton(onClick = {
+//                viewModel.deleteItem(id)
+//                navigateUp.invoke()
+//                openAlertDialog = false
+//            }) {
+//                Text(text = "Yes")
+//            }
+//        },
+//            title = {
+//                Text(text = "Confirm Delete")
+//            },
+//            text = {
+//                Text(text = "Do you want to delete this item?")
+//            },
+//            dismissButton = {
+//                TextButton(onClick = {
+//                    openAlertDialog = false
+//                }) {
+//                    Text(text = "No")
+//                }
+//            }
+//        )
+//    }
     Scaffold(
-        floatingActionButton = {
-            if (viewModel.state.isUpdatingItem) {
-                FloatingActionButton(
-                    modifier = Modifier
-                        .size(64.dp),
-                    onClick = {
-                        openAlertDialog = true
-                    },
-                ) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Remove Button")
-                }
-            }
-        }
+//        floatingActionButton = {
+//            if (viewModel.state.isUpdatingItem) {
+//                FloatingActionButton(
+//                    modifier = Modifier
+//                        .size(64.dp),
+//                    onClick = {
+//                        openAlertDialog = true
+//                    },
+//                ) {
+//                    Icon(Icons.Filled.Delete, contentDescription = "Remove Button")
+//                }
+//            }
+//        }
     ) {
         ItemEntry(
             state = viewModel.state,
