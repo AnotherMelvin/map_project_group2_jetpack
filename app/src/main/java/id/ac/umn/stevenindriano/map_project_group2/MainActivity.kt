@@ -1,6 +1,7 @@
 package id.ac.umn.stevenindriano.map_project_group2
 
 import android.Manifest
+import android.accounts.AccountManager
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +11,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
@@ -52,12 +54,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,6 +71,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -98,6 +105,8 @@ import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavScreenMenu
 import id.ac.umn.stevenindriano.map_project_group2.ui.setting.SettingScreen
 import id.ac.umn.stevenindriano.map_project_group2.ui.theme.Map_project_group2Theme
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.util.concurrent.CancellationException
 
 class MainActivity : ComponentActivity() {
 
@@ -154,6 +163,13 @@ class MainActivity : ComponentActivity() {
         startActivity(intent)
     }
 
+    private fun goHome() {
+        val i = Intent(Intent.ACTION_MAIN)
+        i.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        i.addCategory(Intent.CATEGORY_HOME)
+        startActivity(i)
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -171,9 +187,26 @@ class MainActivity : ComponentActivity() {
                 var menuExpanded by remember {
                     mutableStateOf(false)
                 }
-
                 var itemId by remember {
                     mutableIntStateOf(0)
+                }
+                var sortList by remember {
+                    mutableStateOf("Newest")
+                }
+                var isHome by remember {
+                    mutableStateOf(false)
+                }
+                var isSettings by remember {
+                    mutableStateOf(false)
+                }
+                var isCreate by remember {
+                    mutableStateOf(false)
+                }
+                var isEdit by remember {
+                    mutableStateOf(false)
+                }
+                var isSign by remember {
+                    mutableStateOf(false)
                 }
 
                 val createEditViewModel = viewModel<CreateEditViewModel>(factory = CreateEditViewModelFactory(itemId))
@@ -226,7 +259,7 @@ class MainActivity : ComponentActivity() {
 
                     ModalNavigationDrawer(
                         drawerContent = {
-                            if (googleAuthUiClient.getSignedInUser() != null) {
+                            if ((isSign) && (isHome || isSettings)) {
                                 ModalDrawerSheet {
                                     Column(
                                         modifier = Modifier
@@ -235,15 +268,42 @@ class MainActivity : ComponentActivity() {
                                     ) {
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Row(verticalAlignment = Alignment.CenterVertically) {
-                                            if (googleAuthUiClient.getSignedInUser()!!.profilePictureUrl != null) {
-                                                AsyncImage(
-                                                    model = googleAuthUiClient.getSignedInUser()!!.profilePictureUrl,
-                                                    contentDescription = "Profile Picture",
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier
-                                                        .size(64.dp)
-                                                        .clip(CircleShape)
-                                                )
+                                            if (googleAuthUiClient.getSignedInUser() != null) {
+                                                if (googleAuthUiClient.getSignedInUser()!!.profilePictureUrl != null) {
+                                                    AsyncImage(
+                                                        model = googleAuthUiClient.getSignedInUser()!!.profilePictureUrl,
+                                                        contentDescription = "Profile Picture",
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .size(64.dp)
+                                                            .clip(CircleShape)
+                                                    )
+                                                } else {
+                                                    Image(
+                                                        painter = painterResource(id = R.drawable.xpiry_logo),
+                                                        contentDescription = "app logo",
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .size(64.dp)
+                                                            .clip(RoundedCornerShape(16.dp))
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.width(16.dp))
+
+                                                if (googleAuthUiClient.getSignedInUser()!!.username != null) {
+                                                    Text(
+                                                        text = "Hello, " + (googleAuthUiClient.getSignedInUser()?.username ?: String),
+                                                        fontSize = 18.sp,
+                                                        fontWeight = Bold
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "Xpiry",
+                                                        fontSize = 18.sp,
+                                                        fontWeight = Bold
+                                                    )
+                                                }
                                             } else {
                                                 Image(
                                                     painter = painterResource(id = R.drawable.xpiry_logo),
@@ -253,13 +313,13 @@ class MainActivity : ComponentActivity() {
                                                         .size(64.dp)
                                                         .clip(RoundedCornerShape(16.dp))
                                                 )
+                                                Spacer(modifier = Modifier.width(16.dp))
+                                                Text(
+                                                    text = "Xpiry",
+                                                    fontSize = 18.sp,
+                                                    fontWeight = Bold
+                                                )
                                             }
-                                            Spacer(modifier = Modifier.width(16.dp))
-                                            Text(
-                                                text = "Hello, " + (googleAuthUiClient.getSignedInUser()?.username ?: String),
-                                                fontSize = 18.sp,
-                                                fontWeight = Bold
-                                            )
                                         }
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Divider(thickness = 1.dp)
@@ -300,25 +360,20 @@ class MainActivity : ComponentActivity() {
                         },
                         drawerState = drawerState
                     ) {
-                        var sortList by remember {
-                            mutableStateOf("Newest")
-                        }
-                        var isHome by remember {
-                            mutableStateOf(false)
-                        }
-                        var isCreate by remember {
-                            mutableStateOf(false)
-                        }
-                        var isEdit by remember {
-                            mutableStateOf(false)
-                        }
-
                         Scaffold(
                             topBar = {
-                                if (googleAuthUiClient.getSignedInUser() != null) {
+                                if (isSign) {
                                     TopAppBar(
                                         title = {
-                                            Text(text = getString(R.string.app_name))
+                                            if (isCreate) {
+                                                Text(text = "Add New Item")
+                                            } else if (isEdit) {
+                                                Text(text = "Update Item")
+                                            } else if (isSettings) {
+                                                Text(text = "Settings")
+                                            } else {
+                                                Text(text = getString(R.string.app_name))
+                                            }
                                         },
                                         navigationIcon = {
                                             if (isCreate || isEdit) {
@@ -414,6 +469,7 @@ class MainActivity : ComponentActivity() {
 
                                     LaunchedEffect(key1 = state.isSignInSucessful) {
                                         if (state.isSignInSucessful) {
+                                            isSign = true
                                             Toast.makeText(applicationContext, "Sign in successful", Toast.LENGTH_LONG).show()
                                             navController.navigate(NavDrawerMenu.Home.route)
                                             landViewModel.resetState()
@@ -422,29 +478,43 @@ class MainActivity : ComponentActivity() {
 
                                     LandingScreen(
                                         state = state,
-                                        onSignInCLick = {
-                                            lifecycleScope.launch {
-                                                val signInIntentSender = googleAuthUiClient.signIn()
-                                                launcher.launch(
-                                                    IntentSenderRequest.Builder(
-                                                        signInIntentSender ?: return@launch
-                                                    ).build()
-                                                )
+                                        onSignInCLick = {mode ->
+                                            if (mode == 1) {
+                                                lifecycleScope.launch {
+                                                    val signInIntentSender = googleAuthUiClient.signIn()
+                                                    launcher.launch(
+                                                        IntentSenderRequest.Builder(
+                                                            signInIntentSender ?: return@launch
+                                                        ).build()
+                                                    )
+                                                }
+                                            } else {
+                                                isSign = true
+                                                Toast.makeText(applicationContext, "Guest mode", Toast.LENGTH_LONG).show()
+                                                navController.navigate(NavDrawerMenu.Home.route)
                                             }
                                         }
                                     )
 
                                     isHome = false
+                                    isSettings = false
                                     isCreate = false
                                     isEdit = false
                                 }
                                 composable(route = NavDrawerMenu.Home.route) {
-                                    HomeScreen(onNavigate = {id ->
-                                        navController.navigate(route = "${NavScreenMenu.CreateEdit.route}?id=$id")
-                                        itemId = id
-                                    }, sortList)
+                                    HomeScreen(
+                                        onNavigate = {id ->
+                                            navController.navigate(route = "${NavScreenMenu.CreateEdit.route}?id=$id")
+                                            itemId = id
+                                        },
+                                        sortList,
+                                        onBack = {
+                                            goHome()
+                                        }
+                                    )
 
                                     isHome = true
+                                    isSettings = false
                                     isCreate = false
                                     isEdit = false
                                 }
@@ -458,6 +528,7 @@ class MainActivity : ComponentActivity() {
                                     }
 
                                     isHome = false
+                                    isSettings = false
 
                                     if (id == -1) {
                                         isCreate = true
@@ -476,12 +547,14 @@ class MainActivity : ComponentActivity() {
                                                     Toast.LENGTH_LONG
                                                 ).show()
 
+                                                isSign = false
                                                 navController.popBackStack()
                                             }
                                         }
                                     )
 
                                     isHome = false
+                                    isSettings = true
                                     isCreate = false
                                     isEdit = false
                                 }

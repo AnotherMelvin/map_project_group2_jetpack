@@ -3,6 +3,7 @@ package id.ac.umn.stevenindriano.map_project_group2.auth
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
+import android.widget.Toast
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInRequest.GoogleIdTokenRequestOptions
 import com.google.android.gms.auth.api.identity.SignInClient
@@ -26,6 +27,11 @@ class GoogleAuthUiClient(
             ).await()
         } catch (e: Exception) {
             e.printStackTrace()
+            if (e.message.equals("16: Cannot find a matching credential.")) {
+                Toast.makeText(context, "No google account detected", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
+            }
             if (e is CancellationException) throw e
             null
         }
@@ -37,6 +43,7 @@ class GoogleAuthUiClient(
         val credential = oneTapClient.getSignInCredentialFromIntent(intent)
         val googleIdToken = credential.googleIdToken
         val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+
         return try {
             val user = auth.signInWithCredential(googleCredentials).await().user
             SignInResult(

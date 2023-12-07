@@ -70,51 +70,8 @@ fun CreateEditScreen(
     navigateUp: () -> Unit
 ) {
     val viewModel = viewModel<CreateEditViewModel>(factory = CreateEditViewModelFactory(id))
-//    var openAlertDialog by rememberSaveable {
-//        mutableStateOf(false)
-//    }
-//    if (openAlertDialog) {
-//        AlertDialog(onDismissRequest = {
-//            openAlertDialog = false
-//        }, confirmButton = {
-//            TextButton(onClick = {
-//                viewModel.deleteItem(id)
-//                navigateUp.invoke()
-//                openAlertDialog = false
-//            }) {
-//                Text(text = "Yes")
-//            }
-//        },
-//            title = {
-//                Text(text = "Confirm Delete")
-//            },
-//            text = {
-//                Text(text = "Do you want to delete this item?")
-//            },
-//            dismissButton = {
-//                TextButton(onClick = {
-//                    openAlertDialog = false
-//                }) {
-//                    Text(text = "No")
-//                }
-//            }
-//        )
-//    }
-    Scaffold(
-//        floatingActionButton = {
-//            if (viewModel.state.isUpdatingItem) {
-//                FloatingActionButton(
-//                    modifier = Modifier
-//                        .size(64.dp),
-//                    onClick = {
-//                        openAlertDialog = true
-//                    },
-//                ) {
-//                    Icon(Icons.Filled.Delete, contentDescription = "Remove Button")
-//                }
-//            }
-//        }
-    ) {
+
+    Scaffold() {
         ItemEntry(
             state = viewModel.state,
             requestCameraPermissionLauncher = requestPermissionLauncher,
@@ -199,28 +156,37 @@ private fun ItemEntry(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(15.dp)
             ) {
-                Image(
-                    painter = if (state.image != null) rememberAsyncImagePainter(model = state.image) else painterResource(
-                        R.drawable.ic_image
-                    ),
-                    contentDescription = "Item Image",
-                    modifier = Modifier.size(200.dp)
-                )
-                Text(text = if (state.image != null) "Change Image From:" else "Choose Image from:")
-                Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
-                    OutlinedButton(
-                        onClick = {
-                            launchGallery.launch(arrayOf("image/*"))
-                        }
+                Row {
+                    Image(
+                        painter = if (state.image != null) rememberAsyncImagePainter(model = state.image) else painterResource(
+                            R.drawable.ic_image
+                        ),
+                        contentDescription = "Item Image",
+                        modifier = Modifier.size(200.dp)
+                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
-                        Text(text = "Gallery")
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        Spacer(modifier = Modifier.size(10.dp))
+                        Text(text = if (state.image != null) "Change Image From:" else "Choose Image from:")
+                        OutlinedButton(
+                            onClick = {
+                                launchGallery.launch(arrayOf("image/*"))
+                            }
+                        ) {
+                            Text(text = "Gallery")
                         }
-                    ) {
-                        Text(text = "Camera")
+                        OutlinedButton(
+                            onClick = {
+                                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        ) {
+                            Text(text = "Camera")
+                        }
+//                        Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
+//
+//                        }
                     }
                 }
             }

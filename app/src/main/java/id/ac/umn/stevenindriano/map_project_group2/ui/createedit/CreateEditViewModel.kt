@@ -84,10 +84,10 @@ constructor(
             repo.insertItem(
                 ExpireList(
                     name = state.name,
-                    location = state.location,
+                    location = state.location.ifEmpty { "-" },
                     qty = state.qty,
                     exp = state.date,
-                    notes = state.notes,
+                    notes = state.notes.ifEmpty { "-" },
                     imagePath = state.image,
                 )
             )
@@ -100,10 +100,10 @@ constructor(
                 ExpireList(
                     id = id,
                     name = state.name,
-                    location = state.location,
+                    location = state.location.ifEmpty { "-" },
                     qty = state.qty,
                     exp = state.date,
-                    notes = state.notes,
+                    notes = state.notes.ifEmpty { "-" },
                     imagePath = state.image,
                 )
             )
