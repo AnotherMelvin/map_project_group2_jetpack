@@ -52,6 +52,16 @@ android {
 }
 
 dependencies {
+    implementation("com.google.android.material:material:1.10.0")
+
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
+
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+
     implementation("com.google.firebase:firebase-auth-ktx:22.3.0")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")

@@ -1,21 +1,21 @@
 package id.ac.umn.stevenindriano.map_project_group2
 
 import android.Manifest
-import android.accounts.AccountManager
 import android.app.AlertDialog
+import android.app.Application
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -54,16 +54,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,7 +67,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight.Companion.Bold
@@ -79,6 +74,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -90,9 +87,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import coil.compose.AsyncImage
 import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import id.ac.umn.stevenindriano.map_project_group2.auth.GoogleAuthUiClient
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModel
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModelFactory
 import id.ac.umn.stevenindriano.map_project_group2.ui.createedit.CreateEditScreen
 import id.ac.umn.stevenindriano.map_project_group2.ui.createedit.CreateEditViewModel
 import id.ac.umn.stevenindriano.map_project_group2.ui.createedit.CreateEditViewModelFactory
@@ -103,10 +104,9 @@ import id.ac.umn.stevenindriano.map_project_group2.ui.landing.LandingViewModel
 import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavDrawerMenu
 import id.ac.umn.stevenindriano.map_project_group2.ui.navigation.NavScreenMenu
 import id.ac.umn.stevenindriano.map_project_group2.ui.setting.SettingScreen
+import id.ac.umn.stevenindriano.map_project_group2.ui.setting.SettingViewModel
 import id.ac.umn.stevenindriano.map_project_group2.ui.theme.Map_project_group2Theme
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import java.util.concurrent.CancellationException
 
 class MainActivity : ComponentActivity() {
 
@@ -123,13 +123,18 @@ class MainActivity : ComponentActivity() {
         if (!isGranted) showRationaleDialog()
     }
 
+    private val requestNotificationLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {}
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun requestCameraPermission() {
         when {
             ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // granted
+
             }
 
             ActivityCompat.shouldShowRequestPermissionRationale(
@@ -140,6 +145,19 @@ class MainActivity : ComponentActivity() {
             }
 
             else -> requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun requestNotificationPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+
+        } else {
+            requestNotificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -170,6 +188,40 @@ class MainActivity : ComponentActivity() {
         startActivity(i)
     }
 
+    private lateinit var selectedDuration: String
+    private var selectedDurationIndex: Int = 0
+    private val durations = arrayOf("3 Days Before", "5 Days Before", "1 Week Before")
+
+    private fun showRadioConfirmationDialog(
+        setValue: (Int) -> Unit
+    ) {
+        selectedDuration = durations[selectedDurationIndex]
+        AlertDialog.Builder(this)
+            .setTitle("Reminder Duration")
+            .setSingleChoiceItems(durations, selectedDurationIndex) { _, which ->
+                selectedDurationIndex = which
+                selectedDuration = durations[which]
+            }
+            .setPositiveButton("Ok") { _, _ ->
+                when (selectedDuration) {
+                    "3 Days Before" -> {
+                        setValue(3)
+                    }
+                    "5 Days Before" -> {
+                        setValue(5)
+                    }
+                    else -> {
+                        setValue(7)
+                    }
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -208,8 +260,27 @@ class MainActivity : ComponentActivity() {
                 var isSign by remember {
                     mutableStateOf(false)
                 }
+                var durationValue by remember {
+                    mutableIntStateOf(3)
+                }
 
                 val createEditViewModel = viewModel<CreateEditViewModel>(factory = CreateEditViewModelFactory(itemId))
+                val notificationViewModel: NotificationViewModel = viewModel(
+                    factory = NotificationViewModelFactory(
+                        LocalContext.current.applicationContext as Application
+                    )
+                )
+
+                val settingWrapper = (application as MainApplication).settingWrapper
+                val settingViewModel = ViewModelProvider(this, object: ViewModelProvider.Factory {
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        return SettingViewModel(settingWrapper) as T
+                    }
+                }) [SettingViewModel::class.java]
+
+                settingViewModel.getValue().observe(this) {
+                    durationValue = it
+                }
 
                 var openAlertDialog by rememberSaveable {
                     mutableStateOf(false)
@@ -221,6 +292,7 @@ class MainActivity : ComponentActivity() {
                     }, confirmButton = {
                         TextButton(onClick = {
                             createEditViewModel.deleteItem(itemId)
+                            notificationViewModel.cancelWorker(createEditViewModel.state.reminderUUID, createEditViewModel.state.expUUID)
                             navController.popBackStack()
                             openAlertDialog = false
                         }) {
@@ -259,7 +331,7 @@ class MainActivity : ComponentActivity() {
 
                     ModalNavigationDrawer(
                         drawerContent = {
-                            if ((isSign) && (isHome || isSettings)) {
+                            if ((isSign || googleAuthUiClient.getSignedInUser() != null) && (isHome || isSettings)) {
                                 ModalDrawerSheet {
                                     Column(
                                         modifier = Modifier
@@ -448,7 +520,8 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 composable(route = NavScreenMenu.Landing.route) {
                                     LaunchedEffect(key1 = Unit) {
-                                        if (googleAuthUiClient.getSignedInUser() != null) {
+                                        if (googleAuthUiClient.getSignedInUser() != null || isSign) {
+                                            isSign = true
                                             navController.navigate(NavDrawerMenu.Home.route)
                                         }
                                     }
@@ -501,7 +574,11 @@ class MainActivity : ComponentActivity() {
                                     isCreate = false
                                     isEdit = false
                                 }
-                                composable(route = NavDrawerMenu.Home.route) {
+                                composable(
+                                    route = NavDrawerMenu.Home.route,
+                                    deepLinks = listOf(navDeepLink { uriPattern = "HOME/FROM={NOTIFICATION}" })
+                                ) {
+                                    requestNotificationPermission()
                                     HomeScreen(
                                         onNavigate = {id ->
                                             navController.navigate(route = "${NavScreenMenu.CreateEdit.route}?id=$id")
@@ -523,7 +600,11 @@ class MainActivity : ComponentActivity() {
                                     arguments = listOf(navArgument("id"){type = NavType.IntType})
                                 ) {
                                     val id = it.arguments?.getInt("id") ?: -1
-                                    CreateEditScreen(id = id, requestPermissionLauncher = requestPermissionLauncher) {
+                                    CreateEditScreen(
+                                        id = id,
+                                        requestPermissionLauncher = requestPermissionLauncher,
+                                        duration = durationValue
+                                    ) {
                                         navController.navigateUp()
                                     }
 
@@ -550,6 +631,11 @@ class MainActivity : ComponentActivity() {
                                                 isSign = false
                                                 navController.popBackStack()
                                             }
+                                        },
+                                        invokeDialog = {
+                                            showRadioConfirmationDialog { value ->
+                                                settingViewModel.saveValue(value)
+                                            }
                                         }
                                     )
 
@@ -565,5 +651,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 }

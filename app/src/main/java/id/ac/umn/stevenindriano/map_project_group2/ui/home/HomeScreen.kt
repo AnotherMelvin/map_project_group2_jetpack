@@ -34,10 +34,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import id.ac.umn.stevenindriano.map_project_group2.R
 import id.ac.umn.stevenindriano.map_project_group2.database.ExpireList
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -89,7 +91,6 @@ fun HomeScreen(
         }
     }
 
-
     if (sortedList.isEmpty()) {
         CenteredText(text = "No items yet")
     }
@@ -126,10 +127,19 @@ fun ExpireItems(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Spacer(modifier = Modifier.size(5.dp))
             if (item.imagePath != null) {
-                Spacer(modifier = Modifier.size(5.dp))
                 Image(
                     painter = rememberAsyncImagePainter(model = item.imagePath),
+                    contentDescription = "Item Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.groceries),
                     contentDescription = "Item Image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

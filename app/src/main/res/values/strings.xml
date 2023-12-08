@@ -5,4 +5,6 @@
     <string name="dark_theme">Dark Theme</string>
     <string name="dynamicColor">Dynamic Color</string>
     <string name="default_web_client_id">546758583390-ia2smh9tbn467g1fmdqr941h80kqspts.apps.googleusercontent.com</string>
+    <string name="channel_name">xpiry_reminder_channel</string>
+    <string name="channel_description">Xpiry Reminder Notification</string>
 </resources>

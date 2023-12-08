@@ -5,6 +5,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
+import java.util.UUID
 
 @Entity(tableName = "item_list")
 data class ExpireList(
@@ -23,4 +24,8 @@ data class ExpireList(
     val notes: String,
     @ColumnInfo(name = "image")
     val imagePath: Uri? = null,
+    @ColumnInfo(name = "reminder_worker_uuid")
+    val reminderUUID: UUID,
+    @ColumnInfo(name = "exp_worker_uuid")
+    val expUUID: UUID
 )

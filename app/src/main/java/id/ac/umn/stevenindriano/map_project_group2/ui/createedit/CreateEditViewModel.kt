@@ -1,25 +1,37 @@
 package id.ac.umn.stevenindriano.map_project_group2.ui.createedit
 
+import android.app.Application
 import android.net.Uri
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import id.ac.umn.stevenindriano.map_project_group2.Graph
 import id.ac.umn.stevenindriano.map_project_group2.database.ExpireList
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModel
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModelFactory
+import id.ac.umn.stevenindriano.map_project_group2.ui.home.formatDate
 import id.ac.umn.stevenindriano.map_project_group2.ui.repository.Repository
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.Period
+import java.time.format.DateTimeFormatter
 import java.util.Date
+import java.util.UUID
 
 class CreateEditViewModel
 constructor(
     private val itemId: Int,
     private val repo: Repository = Graph.repository
 ): ViewModel() {
-
     var state by mutableStateOf(CreateEditState())
         private set
 
@@ -34,7 +46,9 @@ constructor(
                             qty = it.qty,
                             date = it.exp,
                             notes = it.notes,
-                            image = it.imagePath
+                            image = it.imagePath,
+                            reminderUUID = it.reminderUUID,
+                            expUUID = it.expUUID
                         )
                     }
                 }
@@ -68,7 +82,11 @@ constructor(
     }
 
     fun onDateChange(newValue: Date) {
-        state = state.copy(date = newValue)
+        state = if (newValue < Date()) {
+            state.copy(date = Date())
+        } else {
+            state.copy(date = newValue)
+        }
     }
 
     fun onNotesChange(newValue: String) {
@@ -77,6 +95,14 @@ constructor(
 
     fun onImageChange(newValue: Uri?) {
         state = state.copy(image = newValue)
+    }
+
+    fun onReminderIdChange(newValue: UUID) {
+        state = state.copy(reminderUUID = newValue)
+    }
+
+    fun onExpIdChange(newValue: UUID) {
+        state = state.copy(expUUID = newValue)
     }
 
     fun addListItem() {
@@ -89,6 +115,8 @@ constructor(
                     exp = state.date,
                     notes = state.notes.ifEmpty { "-" },
                     imagePath = state.image,
+                    reminderUUID = state.reminderUUID,
+                    expUUID = state.expUUID
                 )
             )
         }
@@ -105,6 +133,8 @@ constructor(
                     exp = state.date,
                     notes = state.notes.ifEmpty { "-" },
                     imagePath = state.image,
+                    reminderUUID = state.reminderUUID,
+                    expUUID = state.expUUID
                 )
             )
         }
@@ -116,6 +146,20 @@ constructor(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getExpDuration(): Int {
+        val dateFormatter: DateTimeFormatter =  DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        val from = LocalDate.now()
+        val to = LocalDate.parse(formatDate(state.date), dateFormatter)
+
+        val period = Period.between(from, to)
+
+        return period.days
+    }
+
+    fun getReminderDuration(exp: Int, offset: Int): Int {
+        return if ((exp - offset) < 0) 0 else (exp - offset)
+    }
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -133,5 +177,7 @@ data class CreateEditState(
     val notes: String = "",
     val image: Uri? = null,
     val date: Date = Date(),
+    val reminderUUID: UUID = UUID.randomUUID(),
+    val expUUID: UUID = UUID.randomUUID(),
     val isUpdatingItem: Boolean = false
 )

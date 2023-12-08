@@ -2,10 +2,12 @@ package id.ac.umn.stevenindriano.map_project_group2.ui.createedit
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Application
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.util.Log
 import android.widget.DatePicker
@@ -13,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,17 +58,23 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import id.ac.umn.stevenindriano.map_project_group2.R
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModel
+import id.ac.umn.stevenindriano.map_project_group2.service.NotificationViewModelFactory
 import id.ac.umn.stevenindriano.map_project_group2.ui.home.formatDate
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
+@RequiresApi(Build.VERSION_CODES.O)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateEditScreen(
     id: Int,
+    duration: Int,
     requestPermissionLauncher: ActivityResultLauncher<String>,
     navigateUp: () -> Unit
 ) {
@@ -81,8 +90,13 @@ fun CreateEditScreen(
             onNotesChange = viewModel::onNotesChange,
             onImageChange = viewModel::onImageChange,
             onDateSelected = viewModel::onDateChange,
+            reminderDuration = viewModel.getReminderDuration(viewModel.getExpDuration(), duration),
+            expireDuration = viewModel.getExpDuration(),
             updateItem = { viewModel.updateListItem(id) },
-            saveItem = viewModel::addListItem
+            saveItem = viewModel::addListItem,
+            onReminderIdChange = viewModel::onReminderIdChange,
+            onExpIdChange = viewModel::onExpIdChange,
+            duration = duration
         ) {
             navigateUp.invoke()
         }
@@ -101,6 +115,11 @@ private fun ItemEntry(
     onNotesChange: (String) -> Unit,
     onImageChange: (Uri?) -> Unit,
     onDateSelected: (Date) -> Unit,
+    onReminderIdChange: (UUID) -> Unit,
+    onExpIdChange: (UUID) -> Unit,
+    reminderDuration: Int,
+    expireDuration: Int,
+    duration: Int,
     updateItem: () -> Unit,
     saveItem: () -> Unit,
     navigateUp: () -> Unit
@@ -109,6 +128,12 @@ private fun ItemEntry(
     var hasImage by remember {
         mutableStateOf(false)
     }
+
+    val notificationViewModel: NotificationViewModel = viewModel(
+        factory = NotificationViewModelFactory(
+            LocalContext.current.applicationContext as Application
+        )
+    )
 
     val launchCamera = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
@@ -184,9 +209,6 @@ private fun ItemEntry(
                         ) {
                             Text(text = "Camera")
                         }
-//                        Row(horizontalArrangement = Arrangement.spacedBy(15.dp)) {
-//
-//                        }
                     }
                 }
             }
@@ -209,24 +231,31 @@ private fun ItemEntry(
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(text = formatDate(state.date))
-                Spacer(modifier = Modifier.size(4.dp))
-                val mDatePicker = datePickerDialog(
-                    context = LocalContext.current,
-                    onDateSelected = { date ->
-                        onDateSelected.invoke(date)
-                    }
-                )
-                IconButton(onClick = { mDatePicker.show() }) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null
+            Column {
+                Spacer(modifier = Modifier.Companion.size(10.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Icon(imageVector = Icons.Default.DateRange, contentDescription = null)
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(text = formatDate(state.date))
+                    Spacer(modifier = Modifier.size(4.dp))
+                    val mDatePicker = datePickerDialog(
+                        context = LocalContext.current,
+                        onDateSelected = { date ->
+                            onDateSelected.invoke(date)
+                        }
                     )
+                    IconButton(onClick = { mDatePicker.show() }) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = null
+                        )
+                    }
                 }
             }
+
             OutlinedTextField(
                 value = state.qty,
                 onValueChange = { onQtyChange(it) },
@@ -249,10 +278,29 @@ private fun ItemEntry(
             onClick = {
                 when (state.isUpdatingItem) {
                     true -> {
+                        notificationViewModel.cancelWorker(state.reminderUUID, state.expUUID)
+                        val (reminder, exp) = notificationViewModel.scheduleNotifications(
+                            reminderDuration.toLong() * 1000,
+                            expireDuration.toLong() * 1000,
+                            TimeUnit.MILLISECONDS,
+                            state.name,
+                            getDurationLabel(duration)
+                        )
+                        onReminderIdChange(reminder)
+                        onExpIdChange(exp)
                         updateItem.invoke()
                     }
 
                     false -> {
+                        val (reminder, exp) = notificationViewModel.scheduleNotifications(
+                            reminderDuration.toLong() * 1000,
+                            expireDuration.toLong() * 1000,
+                            TimeUnit.MILLISECONDS,
+                            state.name,
+                            getDurationLabel(duration)
+                        )
+                        onReminderIdChange(reminder)
+                        onExpIdChange(exp)
                         saveItem.invoke()
                     }
                 }
@@ -281,6 +329,20 @@ fun getCamImageUri(context: Context): Uri? {
         Log.e("Camera", "Error: ${e.message}")
     }
     return uri
+}
+
+fun getDurationLabel(value: Int): String {
+    return when (value) {
+        3 -> {
+            "3 Days"
+        }
+        5 -> {
+            "5 Days"
+        }
+        else -> {
+            "1 Week"
+        }
+    }
 }
 
 @SuppressLint("SimpleDateFormat")
