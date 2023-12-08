@@ -280,8 +280,8 @@ private fun ItemEntry(
                     true -> {
                         notificationViewModel.cancelWorker(state.reminderUUID, state.expUUID)
                         val (reminder, exp) = notificationViewModel.scheduleNotifications(
-                            reminderDuration.toLong() * 1000,
-                            expireDuration.toLong() * 1000,
+                            reminderDuration.toLong() * 24 * 3600 * 1000,
+                            expireDuration.toLong() * 24 * 3600 * 1000,
                             TimeUnit.MILLISECONDS,
                             state.name,
                             getDurationLabel(duration)
