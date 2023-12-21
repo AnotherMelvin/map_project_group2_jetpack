@@ -26,13 +26,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -50,8 +53,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -74,7 +80,7 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun CreateEditScreen(
     id: Int,
-    duration: Int,
+    duration: Long,
     requestPermissionLauncher: ActivityResultLauncher<String>,
     navigateUp: () -> Unit
 ) {
@@ -117,9 +123,9 @@ private fun ItemEntry(
     onDateSelected: (Date) -> Unit,
     onReminderIdChange: (UUID) -> Unit,
     onExpIdChange: (UUID) -> Unit,
-    reminderDuration: Int,
-    expireDuration: Int,
-    duration: Int,
+    reminderDuration: Long,
+    expireDuration: Long,
+    duration: Long,
     updateItem: () -> Unit,
     saveItem: () -> Unit,
     navigateUp: () -> Unit
@@ -181,33 +187,54 @@ private fun ItemEntry(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(15.dp)
             ) {
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Image(
                         painter = if (state.image != null) rememberAsyncImagePainter(model = state.image) else painterResource(
                             R.drawable.ic_image
                         ),
                         contentDescription = "Item Image",
-                        modifier = Modifier.size(200.dp)
+                        modifier = Modifier.size(180.dp)
                     )
+                    Spacer(modifier = Modifier.size(10.dp))
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(15.dp)
                     ) {
-                        Spacer(modifier = Modifier.size(10.dp))
-                        Text(text = if (state.image != null) "Change Image From:" else "Choose Image from:")
-                        OutlinedButton(
-                            onClick = {
-                                launchGallery.launch(arrayOf("image/*"))
-                            }
+                        Button(
+                            onClick = { launchGallery.launch(arrayOf("image/*")) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 0.dp, end = 0.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Black,
+                                contentColor = Color.White
+                            )
                         ) {
-                            Text(text = "Gallery")
+                            Icon(
+                                painter = painterResource(R.drawable.icon_gallery),
+                                contentDescription = "Gallery"
+                            )
+                            Text(text = "Gallery", modifier = Modifier.padding(6.dp))
                         }
-                        OutlinedButton(
-                            onClick = {
-                                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-                            }
+                        Button(
+                            onClick = { requestPermissionLauncher.launch(Manifest.permission.CAMERA) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 0.dp, end = 0.dp),
+                            shape = RoundedCornerShape(6.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Black,
+                                contentColor = Color.White
+                            )
                         ) {
-                            Text(text = "Camera")
+                            Icon(
+                                painter = painterResource(R.drawable.icon_camera),
+                                contentDescription = "Camera"
+                            )
+                            Text(text = "Camera", modifier = Modifier.padding(6.dp))
                         }
                     }
                 }
@@ -217,14 +244,14 @@ private fun ItemEntry(
         OutlinedTextField(
             value = state.name,
             onValueChange = { onNameChange(it) },
-            label = { Text(text = "Item Name") },
+            label = { Text(text = "Item Name*") },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.Companion.size(15.dp))
         OutlinedTextField(
             value = state.location,
             onValueChange = { onLocationChange(it) },
-            label = { Text(text = "Item Location") },
+            label = { Text(text = "Item Location*") },
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(modifier = Modifier.Companion.size(15.dp))
@@ -259,7 +286,7 @@ private fun ItemEntry(
             OutlinedTextField(
                 value = state.qty,
                 onValueChange = { onQtyChange(it) },
-                label = { Text(text = "Qty") },
+                label = { Text(text = "Qty*") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -284,7 +311,7 @@ private fun ItemEntry(
                             expireDuration.toLong() * 24 * 3600 * 1000,
                             TimeUnit.MILLISECONDS,
                             state.name,
-                            getDurationLabel(duration)
+                            getDurationLabel(duration.toInt())
                         )
                         onReminderIdChange(reminder)
                         onExpIdChange(exp)
@@ -293,11 +320,11 @@ private fun ItemEntry(
 
                     false -> {
                         val (reminder, exp) = notificationViewModel.scheduleNotifications(
-                            reminderDuration.toLong() * 1000,
-                            expireDuration.toLong() * 1000,
+                            reminderDuration.toLong() * 24 * 3600 * 1000,
+                            expireDuration.toLong() * 24 * 3600 * 1000,
                             TimeUnit.MILLISECONDS,
                             state.name,
-                            getDurationLabel(duration)
+                            getDurationLabel(duration.toInt())
                         )
                         onReminderIdChange(reminder)
                         onExpIdChange(exp)
@@ -306,10 +333,17 @@ private fun ItemEntry(
                 }
                 navigateUp.invoke()
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             enabled = state.name.isNotEmpty() &&
+                    state.location.isNotEmpty() &&
                     state.qty.isNotEmpty() &&
-                    state.date.toString().isNotEmpty()
+                    state.date.toString().isNotEmpty(),
+            shape = RoundedCornerShape(6.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black,
+                contentColor = Color.White
+            )
         ) {
             Text(text = buttonTitle)
         }

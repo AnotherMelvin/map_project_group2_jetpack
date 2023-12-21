@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -51,6 +52,10 @@ fun SettingScreen(
                 contentColor = Color.White
             )
         ) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Duration"
+            )
             Text(text = "Set Reminder Duration", modifier = Modifier.padding(6.dp))
         }
         Spacer(modifier = Modifier.size(15.dp))

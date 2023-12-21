@@ -66,6 +66,7 @@ constructor(
 
     val isFieldNotEmpty: Boolean
         get() = state.name?.isNotEmpty() == true &&
+                state.location?.isNotEmpty() == true &&
                 state.qty?.isNotEmpty() == true &&
                 state.date?.toString()?.isNotEmpty() == true
 
@@ -110,7 +111,7 @@ constructor(
             repo.insertItem(
                 ExpireList(
                     name = state.name,
-                    location = state.location.ifEmpty { "-" },
+                    location = state.location,
                     qty = state.qty,
                     exp = state.date,
                     notes = state.notes.ifEmpty { "-" },
@@ -128,7 +129,7 @@ constructor(
                 ExpireList(
                     id = id,
                     name = state.name,
-                    location = state.location.ifEmpty { "-" },
+                    location = state.location,
                     qty = state.qty,
                     exp = state.date,
                     notes = state.notes.ifEmpty { "-" },
@@ -147,17 +148,19 @@ constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getExpDuration(): Int {
+    fun getExpDuration(): Long {
         val dateFormatter: DateTimeFormatter =  DateTimeFormatter.ofPattern("dd/MM/yyyy")
         val from = LocalDate.now()
         val to = LocalDate.parse(formatDate(state.date), dateFormatter)
 
         val period = Period.between(from, to)
+        val yearsToDays = period.years * 365
+        val monthsToDays = period.months * 30
 
-        return period.days
+        return (yearsToDays + monthsToDays + period.days).toLong()
     }
 
-    fun getReminderDuration(exp: Int, offset: Int): Int {
+    fun getReminderDuration(exp: Long, offset: Long): Long {
         return if ((exp - offset) < 0) 0 else (exp - offset)
     }
 }

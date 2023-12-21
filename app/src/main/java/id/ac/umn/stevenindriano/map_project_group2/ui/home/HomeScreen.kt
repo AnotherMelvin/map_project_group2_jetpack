@@ -13,7 +13,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardColors
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -26,8 +33,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,7 +83,7 @@ fun HomeScreen(
                     .size(64.dp),
                 onClick = {
                     onNavigate.invoke(-1)
-                },
+                }
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "Add Button")
             }
@@ -88,6 +97,7 @@ fun HomeScreen(
                     onNavigate.invoke(it.id)
                 }
             }
+            item { Spacer(modifier = Modifier.padding(100.dp)) }
         }
     }
 
@@ -114,67 +124,126 @@ fun ExpireItems(
     item: ExpireList,
     onItemClick: () -> Unit
 ) {
+    var expand by remember {
+        mutableStateOf(false)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                onItemClick.invoke()
+                expand = !expand
             }
-            .padding(12.dp)
+            .padding(16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Spacer(modifier = Modifier.size(5.dp))
-            if (item.imagePath != null) {
-                Image(
-                    painter = rememberAsyncImagePainter(model = item.imagePath),
-                    contentDescription = "Item Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.groceries),
-                    contentDescription = "Item Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .clip(CircleShape)
-                )
-            }
-            Column(
-                modifier = Modifier.padding(8.dp)
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Spacer(modifier = Modifier.size(5.dp))
+                if (item.imagePath != null) {
+                    Image(
+                        painter = rememberAsyncImagePainter(model = item.imagePath),
+                        contentDescription = "Item Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.groceries),
+                        contentDescription = "Item Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .width(150.dp)
+                ) {
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Divider(
+                        modifier = Modifier.width(150.dp),
+                        thickness = 1.dp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = formatDate(item.exp),
+                        style = MaterialTheme.typography.headlineSmall,
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(
+                        text = "Location: " + item.location,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    Text(
+                        text = "Qty: " + item.qty,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (!expand) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowRight,
+                            contentDescription = "Expand"
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = "Shrink"
+                        )
+                    }
+                }
+            }
+
+            if (expand) {
                 Spacer(modifier = Modifier.size(4.dp))
-                Text(
-                    text = formatDate(item.exp),
-                    style = MaterialTheme.typography.headlineSmall,
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(
-                    text = "Location: " + item.location,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(
-                    text = "Qty: " + item.qty,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Spacer(modifier = Modifier.size(4.dp))
-                Text(
-                    text = "Notes: \n" + item.notes,
-                    style = MaterialTheme.typography.titleSmall,
-                )
+                Divider(thickness = 1.dp, color = Color.White)
+                Spacer(modifier = Modifier.size(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Box(modifier = Modifier.width(290.dp)) {
+                        Text(
+                            text = "Notes: \n" + item.notes,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            modifier = Modifier
+                                .clickable {
+                                    onItemClick()
+                                },
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit"
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.size(10.dp))
             }
         }
     }

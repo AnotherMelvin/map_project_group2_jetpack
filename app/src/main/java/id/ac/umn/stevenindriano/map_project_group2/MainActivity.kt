@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,7 +35,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
@@ -280,6 +284,12 @@ class MainActivity : ComponentActivity() {
 
                 settingViewModel.getValue().observe(this) {
                     durationValue = it
+
+                    selectedDurationIndex = when (it) {
+                        3 -> { 0 }
+                        5 -> { 1 }
+                        else -> { 2 }
+                    }
                 }
 
                 var openAlertDialog by rememberSaveable {
@@ -434,7 +444,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Scaffold(
                             topBar = {
-                                if (isSign) {
+                                if (isSign || googleAuthUiClient.getSignedInUser() != null) {
                                     TopAppBar(
                                         title = {
                                             if (isCreate) {
@@ -484,14 +494,36 @@ class MainActivity : ComponentActivity() {
                                                         onDismissRequest = { menuExpanded = false }
                                                     ) {
                                                         DropdownMenuItem(
-                                                            text = { Text("Newest") },
+                                                            text = {
+                                                                Row(
+                                                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                                                    verticalAlignment = Alignment.CenterVertically
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                                                        contentDescription = "Newest"
+                                                                    )
+                                                                    Spacer(modifier = Modifier.size(10.dp))
+                                                                    Text("Newest")
+                                                                } },
                                                             onClick = {
                                                                 sortList = "Newest"
                                                                 menuExpanded = false
                                                             }
                                                         )
                                                         DropdownMenuItem(
-                                                            text = { Text("Oldest") },
+                                                            text = {
+                                                                Row(
+                                                                    horizontalArrangement = Arrangement.SpaceEvenly,
+                                                                    verticalAlignment = Alignment.CenterVertically
+                                                                ) {
+                                                                    Icon(
+                                                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                                                        contentDescription = "Newest"
+                                                                    )
+                                                                    Spacer(modifier = Modifier.size(10.dp))
+                                                                    Text("Oldest")
+                                                                } },
                                                             onClick = {
                                                                 sortList = "Oldest"
                                                                 menuExpanded = false
@@ -603,7 +635,7 @@ class MainActivity : ComponentActivity() {
                                     CreateEditScreen(
                                         id = id,
                                         requestPermissionLauncher = requestPermissionLauncher,
-                                        duration = durationValue
+                                        duration = durationValue.toLong()
                                     ) {
                                         navController.navigateUp()
                                     }
